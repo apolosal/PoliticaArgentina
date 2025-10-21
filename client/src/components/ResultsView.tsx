@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Share2, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
+import { SiWhatsapp, SiX, SiFacebook } from "react-icons/si";
 import type { TestResults } from "@shared/schema";
 import { currentDescriptions } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -21,14 +22,52 @@ export function ResultsView({ results, onRestart }: ResultsViewProps) {
   const sortedResults = Object.entries(results.percentages)
     .sort(([, a], [, b]) => b - a);
 
+  const getShareUrl = () => {
+    return window.location.href;
+  };
+
+  const getShareText = (platform?: 'whatsapp' | 'twitter' | 'facebook') => {
+    const percentage = results.percentages[results.dominantCurrent].toFixed(1);
+    const current = results.dominantCurrent;
+    
+    if (platform === 'twitter') {
+      return `Hice el Test Político Argentino y mi corriente principal es ${current} (${percentage}%). ¡Hacelo vos también!`;
+    }
+    
+    if (platform === 'whatsapp') {
+      return `Mi resultado en el Test Político Argentino:\n\n*${current}* - ${percentage}%\n\n${dominantDescription.shortDescription}\n\n¡Hacelo vos también!`;
+    }
+    
+    return `Mi resultado en el Test Político Argentino: ${current} - ${percentage}%\n\n${dominantDescription.description}\n\n¡Realizá el test vos también!`;
+  };
+
+  const handleShareWhatsApp = () => {
+    const message = `${getShareText('whatsapp')}\n\n${getShareUrl()}`;
+    const text = encodeURIComponent(message);
+    const url = `https://wa.me/?text=${text}`;
+    window.open(url, '_blank');
+  };
+
+  const handleShareTwitter = () => {
+    const text = encodeURIComponent(getShareText('twitter'));
+    const url = `https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(getShareUrl())}`;
+    window.open(url, '_blank');
+  };
+
+  const handleShareFacebook = () => {
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getShareUrl())}&quote=${encodeURIComponent(getShareText('facebook'))}`;
+    window.open(url, '_blank');
+  };
+
   const handleShare = async () => {
-    const shareText = `Mi resultado en el Test Político Argentino:\n\n${results.dominantCurrent} - ${results.percentages[results.dominantCurrent].toFixed(1)}%\n\n${dominantDescription.description}\n\nRealizá el test vos también!`;
+    const shareText = getShareText();
 
     if (navigator.share) {
       try {
         await navigator.share({
           title: "Test Político Argentino",
           text: shareText,
+          url: getShareUrl(),
         });
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
@@ -125,27 +164,67 @@ export function ResultsView({ results, onRestart }: ResultsViewProps) {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 mt-8">
-            <Button
-              onClick={handleShare}
-              variant="default"
-              size="lg"
-              className="flex-1"
-              data-testid="button-share-results"
-            >
-              <Share2 className="mr-2 h-5 w-5" />
-              Compartir Resultado
-            </Button>
-            <Button
-              onClick={onRestart}
-              variant="outline"
-              size="lg"
-              className="flex-1"
-              data-testid="button-restart-test"
-            >
-              <RotateCcw className="mr-2 h-5 w-5" />
-              Reiniciar Test
-            </Button>
+          <div className="space-y-4 mt-8">
+            <div className="flex flex-col gap-3">
+              <p className="text-sm font-medium text-muted-foreground text-center">
+                Compartir en redes sociales
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Button
+                  onClick={handleShareWhatsApp}
+                  variant="outline"
+                  size="lg"
+                  className="w-full"
+                  data-testid="button-share-whatsapp"
+                >
+                  <SiWhatsapp className="mr-2 h-5 w-5" />
+                  WhatsApp
+                </Button>
+                <Button
+                  onClick={handleShareTwitter}
+                  variant="outline"
+                  size="lg"
+                  className="w-full"
+                  data-testid="button-share-twitter"
+                >
+                  <SiX className="mr-2 h-5 w-5" />
+                  Twitter
+                </Button>
+                <Button
+                  onClick={handleShareFacebook}
+                  variant="outline"
+                  size="lg"
+                  className="w-full"
+                  data-testid="button-share-facebook"
+                >
+                  <SiFacebook className="mr-2 h-5 w-5" />
+                  Facebook
+                </Button>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                onClick={handleShare}
+                variant="secondary"
+                size="lg"
+                className="flex-1"
+                data-testid="button-share-results"
+              >
+                <Share2 className="mr-2 h-5 w-5" />
+                Compartir / Copiar
+              </Button>
+              <Button
+                onClick={onRestart}
+                variant="outline"
+                size="lg"
+                className="flex-1"
+                data-testid="button-restart-test"
+              >
+                <RotateCcw className="mr-2 h-5 w-5" />
+                Reiniciar Test
+              </Button>
+            </div>
           </div>
         </Card>
 
