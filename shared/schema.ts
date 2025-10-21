@@ -196,5 +196,50 @@ export const questions: Question[] = [
       neutral: { "Peronismo": 1, "Radicalismo": 1 },
       disagree: { "Liberalismo": 2, "Conservadurismo": 2 }
     }
+  },
+  {
+    id: 11,
+    text: "El Banco Central debe ser independiente del gobierno y enfocarse exclusivamente en controlar la inflación.",
+    scores: {
+      agree: { "Liberalismo": 2, "Conservadurismo": 2, "Radicalismo": 3 },
+      neutral: { "Peronismo": 1 },
+      disagree: { "Kirchnerismo/Progresismo": 2, "Izquierda": 2 }
+    }
+  },
+  {
+    id: 12,
+    text: "El Estado debe controlar sectores estratégicos como energía, transporte y comunicaciones.",
+    scores: {
+      agree: { "Peronismo": 3, "Kirchnerismo/Progresismo": 3, "Izquierda": 3 },
+      neutral: { "Radicalismo": 1 },
+      disagree: { "Liberalismo": 3, "Conservadurismo": 1 }
+    }
+  },
+  {
+    id: 13,
+    text: "La despenalización del aborto fue un avance necesario para los derechos de las mujeres.",
+    scores: {
+      agree: { "Kirchnerismo/Progresismo": 3, "Izquierda": 3, "Radicalismo": 2, "Liberalismo": 1 },
+      neutral: { "Peronismo": 1 },
+      disagree: { "Conservadurismo": 3 }
+    }
+  },
+  {
+    id: 14,
+    text: "Las empresas privadas son más eficientes que el Estado en la prestación de servicios públicos.",
+    scores: {
+      agree: { "Liberalismo": 3, "Conservadurismo": 2 },
+      neutral: { "Radicalismo": 1 },
+      disagree: { "Peronismo": 2, "Kirchnerismo/Progresismo": 3, "Izquierda": 3 }
+    }
+  },
+  {
+    id: 15,
+    text: "La reforma laboral debe flexibilizar las condiciones de trabajo para fomentar el empleo.",
+    scores: {
+      agree: { "Liberalismo": 3, "Conservadurismo": 1 },
+      neutral: { "Radicalismo": 1 },
+      disagree: { "Peronismo": 3, "Kirchnerismo/Progresismo": 2, "Izquierda": 3 }
+    }
   }
 ];
