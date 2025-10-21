@@ -39,11 +39,22 @@ export interface CurrentDescription {
   shortDescription: string;
 }
 
+// Answer detail for results breakdown
+export interface AnswerDetail {
+  questionId: number;
+  questionText: string;
+  answer: AnswerOption;
+  answerLabel: string;
+  contributedTo: Array<{ current: PoliticalCurrent; points: number }>;
+}
+
 // Test results
 export interface TestResults {
   scores: Record<PoliticalCurrent, number>;
   dominantCurrent: PoliticalCurrent;
   percentages: Record<PoliticalCurrent, number>;
+  answerDetails?: AnswerDetail[];
+  alignment?: CurrentAlignment;
 }
 
 // Answer option display
@@ -52,6 +63,13 @@ export const answerLabels: Record<AnswerOption, string> = {
   neutral: "Neutral",
   disagree: "En desacuerdo"
 };
+
+// Analysis of why user aligned with each current
+export interface CurrentAlignment {
+  current: PoliticalCurrent;
+  percentage: number;
+  keyReasons: string[];
+}
 
 // Political current descriptions
 export const currentDescriptions: Record<PoliticalCurrent, CurrentDescription> = {
