@@ -1,38 +1,37 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
-
-// modify the interface with any CRUD methods
-// you might need
+import { type InsertTestResult, type SelectTestResult, testResults } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  saveTestResult(result: InsertTestResult): Promise<SelectTestResult>;
+  getTestResultsBySession(sessionId: string): Promise<SelectTestResult[]>;
+  getLatestTestResult(sessionId: string): Promise<SelectTestResult | undefined>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-
-  constructor() {
-    this.users = new Map();
+export class DbStorage implements IStorage {
+  async saveTestResult(result: InsertTestResult): Promise<SelectTestResult> {
+    const [saved] = await db.insert(testResults).values(result).returning();
+    return saved;
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  async getTestResultsBySession(sessionId: string): Promise<SelectTestResult[]> {
+    return await db
+      .select()
+      .from(testResults)
+      .where(eq(testResults.sessionId, sessionId))
+      .orderBy(desc(testResults.createdAt));
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  async getLatestTestResult(sessionId: string): Promise<SelectTestResult | undefined> {
+    const results = await db
+      .select()
+      .from(testResults)
+      .where(eq(testResults.sessionId, sessionId))
+      .orderBy(desc(testResults.createdAt))
+      .limit(1);
+    
+    return results[0];
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DbStorage();

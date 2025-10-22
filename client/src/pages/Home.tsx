@@ -4,6 +4,9 @@ import { QuestionView } from "@/components/QuestionView";
 import { ResultsView } from "@/components/ResultsView";
 import { questions, answerLabels } from "@shared/schema";
 import type { UserAnswer, TestResults, PoliticalCurrent, AnswerDetail } from "@shared/schema";
+import { getOrCreateSessionId } from "@/lib/session";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useMutation } from "@tanstack/react-query";
 
 type ViewState = "landing" | "quiz" | "results";
 
@@ -12,6 +15,27 @@ export default function Home() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<UserAnswer[]>([]);
   const [results, setResults] = useState<TestResults | null>(null);
+
+  const saveResultMutation = useMutation({
+    mutationFn: async (data: { sessionId: string; results: TestResults; answers: UserAnswer[] }) => {
+      return await apiRequest("/api/test-results", {
+        method: "POST",
+        body: JSON.stringify({
+          sessionId: data.sessionId,
+          dominantCurrent: data.results.dominantCurrent,
+          scores: data.results.scores,
+          percentages: data.results.percentages,
+          answers: data.answers,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/test-results"] });
+    },
+  });
 
   const handleStart = () => {
     setViewState("quiz");
@@ -29,6 +53,14 @@ export default function Home() {
     } else {
       const calculatedResults = calculateResults(newAnswers);
       setResults(calculatedResults);
+      
+      const sessionId = getOrCreateSessionId();
+      saveResultMutation.mutate({
+        sessionId,
+        results: calculatedResults,
+        answers: newAnswers,
+      });
+      
       setViewState("results");
     }
   };

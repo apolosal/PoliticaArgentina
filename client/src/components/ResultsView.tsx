@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Share2, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
+import { Share2, RotateCcw, ChevronDown, ChevronUp, History } from "lucide-react";
 import { SiWhatsapp, SiX, SiFacebook } from "react-icons/si";
+import { Link } from "wouter";
 import type { TestResults } from "@shared/schema";
 import { currentDescriptions } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -203,27 +204,41 @@ export function ResultsView({ results, onRestart }: ResultsViewProps) {
               </div>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                onClick={handleShare}
-                variant="secondary"
-                size="lg"
-                className="flex-1"
-                data-testid="button-share-results"
-              >
-                <Share2 className="mr-2 h-5 w-5" />
-                Compartir / Copiar
-              </Button>
-              <Button
-                onClick={onRestart}
-                variant="outline"
-                size="lg"
-                className="flex-1"
-                data-testid="button-restart-test"
-              >
-                <RotateCcw className="mr-2 h-5 w-5" />
-                Reiniciar Test
-              </Button>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  onClick={handleShare}
+                  variant="secondary"
+                  size="lg"
+                  className="flex-1"
+                  data-testid="button-share-results"
+                >
+                  <Share2 className="mr-2 h-5 w-5" />
+                  Compartir / Copiar
+                </Button>
+                <Button
+                  onClick={onRestart}
+                  variant="outline"
+                  size="lg"
+                  className="flex-1"
+                  data-testid="button-restart-test"
+                >
+                  <RotateCcw className="mr-2 h-5 w-5" />
+                  Reiniciar Test
+                </Button>
+              </div>
+              
+              <Link href="/historial">
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  className="w-full"
+                  data-testid="button-view-history"
+                >
+                  <History className="mr-2 h-5 w-5" />
+                  Ver Historial de Resultados
+                </Button>
+              </Link>
             </div>
           </div>
         </Card>

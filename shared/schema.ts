@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { pgTable, text, integer, timestamp, jsonb, serial } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
 
 // Political currents in Argentina
 export type PoliticalCurrent = 
@@ -243,3 +245,24 @@ export const questions: Question[] = [
     }
   }
 ];
+
+// Database schema for test results
+export const testResults = pgTable("test_results", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull(),
+  dominantCurrent: text("dominant_current").notNull(),
+  scores: jsonb("scores").notNull(),
+  percentages: jsonb("percentages").notNull(),
+  answers: jsonb("answers").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Insert schema for test results
+export const insertTestResultSchema = createInsertSchema(testResults).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types
+export type InsertTestResult = z.infer<typeof insertTestResultSchema>;
+export type SelectTestResult = typeof testResults.$inferSelect;
