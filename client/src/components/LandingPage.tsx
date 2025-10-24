@@ -28,11 +28,11 @@ export function LandingPage({ onStart, contador }: LandingPageProps) {
           <ArrowRight className="ml-2 h-5 w-5" />
         </Button>
 
-        {/* 👇 Contador de test completados */}
-        {contador !== null && (
-          <p className="mt-6 text-base md:text-lg font-semibold text-muted-foreground">
-            👥 {contador.toLocaleString('es-AR')} personas ya completaron el test
-          </p>
+       {/* 👇 Contador visible 👇 */}
+{typeof contador === "100" && (
+  <p className="mt-6 text-base md:text-lg font-semibold text-muted-foreground">
+    👥 {contador.toLocaleString('es-AR')} personas ya completaron el test
+  </p>
         )}
       </div>
     </div>
