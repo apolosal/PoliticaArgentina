@@ -19,16 +19,11 @@ export default function Home() {
 
   const sessionId = getOrCreateSessionId();
 
-  // Traer valor actual del contador al cargar la LandingPage
+  // Traer contador inicial
   useEffect(() => {
     const fetchContador = async () => {
       try {
-        const res = await fetch(
-          "https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados",
-          {
-            headers: { Authorization: "Bearer ut_A7K6C52qUL6Ehp30saib8V6RCWYi3ohbY6PUAYQS" },
-          }
-        );
+        const res = await fetch("/api/get-counter");
         const data = await res.json();
         setContador(data.value);
       } catch (error) {
@@ -38,7 +33,7 @@ export default function Home() {
     fetchContador();
   }, []);
 
-  // Incrementar contador solo si el usuario no lo completó antes
+  // Incrementa contador solo si el usuario no completó antes
   const incrementarContador = async () => {
     try {
       const res = await fetch("/api/increment-counter", {
@@ -47,9 +42,7 @@ export default function Home() {
         body: JSON.stringify({ sessionId }),
       });
       const data = await res.json();
-      if (data.incremented) {
-        setContador(data.value);
-      }
+      if (data.incremented) setContador(data.value);
     } catch (error) {
       console.error("Error al incrementar contador:", error);
     }
@@ -69,9 +62,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/test-results"] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/test-results"] }),
   });
 
   const handleStart = () => {
@@ -91,114 +82,14 @@ export default function Home() {
       const calculatedResults = calculateResults(newAnswers);
       setResults(calculatedResults);
 
-      // Guardar resultados en backend
-      saveResultMutation.mutate({
-        sessionId,
-        results: calculatedResults,
-        answers: newAnswers,
-      });
+      // Guardar resultados
+      saveResultMutation.mutate({ sessionId, results: calculatedResults, answers: newAnswers });
 
-      // Incrementar contador de usuarios únicos
+      // Incrementar contador robusto
       incrementarContador();
 
       setViewState("results");
     }
-  };
-
-  const calculateResults = (userAnswers: UserAnswer[]): TestResults => {
-    const scores: Record<PoliticalCurrent, number> = {
-      "Liberalismo": 0,
-      "Conservadurismo": 0,
-      "Peronismo": 0,
-      "Kirchnerismo/Progresismo": 0,
-      "Izquierda": 0,
-      "Radicalismo": 0,
-    };
-
-    const answerDetails: AnswerDetail[] = [];
-
-    userAnswers.forEach((userAnswer) => {
-      const question = questions.find((q) => q.id === userAnswer.questionId);
-      if (question) {
-        const answerScores = question.scores[userAnswer.answer];
-        const contributedTo: Array<{ current: PoliticalCurrent; points: number }> = [];
-
-        Object.entries(answerScores).forEach(([current, points]) => {
-          scores[current as PoliticalCurrent] += points;
-          contributedTo.push({ current: current as PoliticalCurrent, points });
-        });
-
-        answerDetails.push({
-          questionId: question.id,
-          questionText: question.text,
-          answer: userAnswer.answer,
-          answerLabel: answerLabels[userAnswer.answer],
-          contributedTo: contributedTo.sort((a, b) => b.points - a.points),
-        });
-      }
-    });
-
-    const totalScore = Object.values(scores).reduce((sum, score) => sum + score, 0);
-
-    const percentages: Record<PoliticalCurrent, number> = {
-      "Liberalismo": 0,
-      "Conservadurismo": 0,
-      "Peronismo": 0,
-      "Kirchnerismo/Progresismo": 0,
-      "Izquierda": 0,
-      "Radicalismo": 0,
-    };
-
-    if (totalScore > 0) {
-      Object.keys(scores).forEach((current) => {
-        percentages[current as PoliticalCurrent] =
-          (scores[current as PoliticalCurrent] / totalScore) * 100;
-      });
-    }
-
-    const dominantCurrent = Object.entries(scores).reduce(
-      (max, [current, score]) => (score > max[1] ? [current, score] : max),
-      ["Liberalismo", 0] as [string, number]
-    )[0] as PoliticalCurrent;
-
-    const topAnswersForDominant = answerDetails
-      .filter((detail) =>
-        detail.contributedTo.some(
-          (c: { current: PoliticalCurrent; points: number }) => c.current === dominantCurrent
-        )
-      )
-      .sort((a, b) => {
-        const aPoints =
-          a.contributedTo.find(
-            (c: { current: PoliticalCurrent; points: number }) => c.current === dominantCurrent
-          )?.points || 0;
-        const bPoints =
-          b.contributedTo.find(
-            (c: { current: PoliticalCurrent; points: number }) => c.current === dominantCurrent
-          )?.points || 0;
-        return bPoints - aPoints;
-      })
-      .slice(0, 3);
-
-    const keyReasons = topAnswersForDominant.map((detail) => {
-      const points =
-        detail.contributedTo.find(
-          (c: { current: PoliticalCurrent; points: number }) => c.current === dominantCurrent
-        )?.points || 0;
-      return `${detail.answerLabel} en: "${detail.questionText}" (+${points} puntos)`;
-    });
-
-    return {
-      scores,
-      dominantCurrent,
-      percentages,
-      answerDetails,
-      alignment: {
-        current: dominantCurrent,
-        percentage: percentages[dominantCurrent],
-        keyReasons,
-      },
-    };
   };
 
   const handleRestart = () => {
@@ -208,11 +99,10 @@ export default function Home() {
     setResults(null);
   };
 
-  if (viewState === "landing") {
-    return <LandingPage onStart={handleStart} contador={contador} />;
-  }
+  // Mantén tu función calculateResults como la tenías antes
 
-  if (viewState === "quiz") {
+  if (viewState === "landing") return <LandingPage onStart={handleStart} contador={contador} />;
+  if (viewState === "quiz")
     return (
       <QuestionView
         question={questions[currentQuestionIndex]}
@@ -221,11 +111,6 @@ export default function Home() {
         onAnswer={handleAnswer}
       />
     );
-  }
-
-  if (viewState === "results" && results) {
-    return <ResultsView results={results} onRestart={handleRestart} />;
-  }
-
+  if (viewState === "results" && results) return <ResultsView results={results} onRestart={handleRestart} />;
   return null;
 }
