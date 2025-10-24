@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -88,31 +88,6 @@ export function ResultsView({ results, onRestart }: ResultsViewProps) {
     });
   };
 
- function useTestCounter() {
-  const [contador, setContador] = useState<number | null>(null);
-
-  useEffect(() => {
-    // Obtener valor actual
-    fetch("https://api.countapi.xyz/get/testpoliticoargentino/completados")
-      .then((res) => res.json())
-      .then((data) => setContador(data.value))
-      .catch((err) => console.error("Error al obtener contador:", err));
-
-    // Incrementar solo si no completó el test
-    if (!localStorage.getItem("testpolitico-completed")) {
-      fetch("https://api.countapi.xyz/hit/testpoliticoargentino/completados")
-        .then((res) => res.json())
-        .then((data) => {
-          setContador(data.value);
-          localStorage.setItem("testpolitico-completed", "true");
-        })
-        .catch((err) => console.error("Error al actualizar contador:", err));
-    }
-  }, []);
-
-  return contador;
-}
-  
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-8 md:py-12">
       <div className="max-w-2xl mx-auto w-full space-y-6">
