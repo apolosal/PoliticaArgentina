@@ -29,7 +29,7 @@ export function LandingPage({ onStart, contador }: LandingPageProps) {
         </Button>
 
        {/* 👇 Contador visible 👇 */}
-{typeof contador === "100" && (
+{typeof contador === "null" && (
   <p className="mt-6 text-base md:text-lg font-semibold text-muted-foreground">
     👥 {contador.toLocaleString('es-AR')} personas ya completaron el test
   </p>
