@@ -53,14 +53,30 @@ export default function Home() {
     } else {
       const calculatedResults = calculateResults(newAnswers);
       setResults(calculatedResults);
-      
+
       const sessionId = getOrCreateSessionId();
       saveResultMutation.mutate({
         sessionId,
         results: calculatedResults,
         answers: newAnswers,
       });
-      
+
+      // 👇 Contador de usuarios únicos que completaron el test
+      try {
+        if (!localStorage.getItem("testpolitico-completed")) {
+          fetch("https://api.countapi.xyz/hit/testpoliticoargentino/completados")
+            .then((res) => res.json())
+            .then((data) => {
+              console.log("✅ Nuevo usuario completó el test. Total:", data.value);
+              localStorage.setItem("testpolitico-completed", "true");
+            })
+            .catch((err) => console.error("Error al actualizar contador:", err));
+        }
+      } catch (e) {
+        console.error("localStorage no disponible:", e);
+      }
+      // 👆 Fin contador
+
       setViewState("results");
     }
   };
@@ -82,7 +98,7 @@ export default function Home() {
       if (question) {
         const answerScores = question.scores[userAnswer.answer];
         const contributedTo: Array<{ current: PoliticalCurrent; points: number }> = [];
-        
+
         Object.entries(answerScores).forEach(([current, points]) => {
           scores[current as PoliticalCurrent] += points;
           contributedTo.push({ current: current as PoliticalCurrent, points });
@@ -99,7 +115,7 @@ export default function Home() {
     });
 
     const totalScore = Object.values(scores).reduce((sum, score) => sum + score, 0);
-    
+
     const percentages: Record<PoliticalCurrent, number> = {
       "Liberalismo": 0,
       "Conservadurismo": 0,
