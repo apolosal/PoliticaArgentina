@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -88,6 +88,27 @@ export function ResultsView({ results, onRestart }: ResultsViewProps) {
     });
   };
 
+ // ✅ Contador de usuarios únicos que completaron el test
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem("testpolitico-completed")) {
+        fetch("https://api.countapi.xyz/hit/testpoliticoargentino/completados")
+          .then((res) => res.json())
+          .then((data) => {
+            console.log("✅ Nuevo usuario completó el test. Total:", data.value);
+            localStorage.setItem("testpolitico-completed", "true");
+
+            // Si LandingPage pasa la función onIncrement, la llamamos
+            if (onIncrement) onIncrement(data.value);
+          })
+          .catch((err) => console.error("Error al actualizar contador:", err));
+      }
+    } catch (e) {
+      console.error("localStorage no disponible:", e);
+    }
+  }, [onIncrement]);
+  // ✅ Fin contador
+  
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-8 md:py-12">
       <div className="max-w-2xl mx-auto w-full space-y-6">
