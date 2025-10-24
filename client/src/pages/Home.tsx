@@ -1,21 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { LandingPage } from "@/components/LandingPage";
 import { QuestionView } from "@/components/QuestionView";
 import { ResultsView } from "@/components/ResultsView";
-import { questions } from "@shared/schema";
-import type { UserAnswer, TestResults } from "@shared/schema";
+import { questions, answerLabels } from "@shared/schema";
+import type { UserAnswer, TestResults, PoliticalCurrent, AnswerDetail } from "@shared/schema";
 import { getOrCreateSessionId } from "@/lib/session";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
-
-// Temporal: función dummy para evitar errores de import
-function calculateResults(answers: UserAnswer[]): TestResults {
-  return {
-    dominantCurrent: "Neutral",
-    scores: {},
-    percentages: { Neutral: 100 },
-  };
-}
 
 type ViewState = "landing" | "quiz" | "results";
 
@@ -24,41 +15,6 @@ export default function Home() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<UserAnswer[]>([]);
   const [results, setResults] = useState<TestResults | null>(null);
-  const [contador, setContador] = useState<number>(0);
-
-  const sessionId = getOrCreateSessionId();
-
-  // Traer contador inicial de manera robusta
-  useEffect(() => {
-    const fetchContador = async () => {
-      try {
-        const res = await fetch("/api/get-counter");
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const data = await res.json();
-        setContador(Number(data.value));
-      } catch (error) {
-        console.error("Error al traer contador:", error);
-        setContador(0);
-      }
-    };
-    fetchContador();
-  }, []);
-
-  // Incrementa contador solo si el usuario no completó antes
-  const incrementarContador = async () => {
-    try {
-      const res = await fetch("/api/increment-counter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId }),
-      });
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      const data = await res.json();
-      if (data.incremented) setContador(Number(data.value));
-    } catch (error) {
-      console.error("Error al incrementar contador:", error);
-    }
-  };
 
   const saveResultMutation = useMutation({
     mutationFn: async (data: { sessionId: string; results: TestResults; answers: UserAnswer[] }) => {
@@ -74,7 +30,9 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
       });
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/test-results"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/test-results"] });
+    },
   });
 
   const handleStart = () => {
@@ -94,12 +52,107 @@ export default function Home() {
       const calculatedResults = calculateResults(newAnswers);
       setResults(calculatedResults);
 
-      saveResultMutation.mutate({ sessionId, results: calculatedResults, answers: newAnswers });
+      const sessionId = getOrCreateSessionId();
+      saveResultMutation.mutate({
+        sessionId,
+        results: calculatedResults,
+        answers: newAnswers,
+      });
 
-      incrementarContador();
+      // ✅ Incrementar contador solo si es la primera vez
+      if (!localStorage.getItem("test-completed")) {
+        localStorage.setItem("test-completed", "true");
+        fetch("/api/increment-counter", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        });
+      }
 
       setViewState("results");
     }
+  };
+
+  const calculateResults = (userAnswers: UserAnswer[]): TestResults => {
+    const scores: Record<PoliticalCurrent, number> = {
+      "Liberalismo": 0,
+      "Conservadurismo": 0,
+      "Peronismo": 0,
+      "Kirchnerismo/Progresismo": 0,
+      "Izquierda": 0,
+      "Radicalismo": 0,
+    };
+
+    const answerDetails: AnswerDetail[] = [];
+
+    userAnswers.forEach((userAnswer) => {
+      const question = questions.find((q) => q.id === userAnswer.questionId);
+      if (question) {
+        const answerScores = question.scores[userAnswer.answer];
+        const contributedTo: Array<{ current: PoliticalCurrent; points: number }> = [];
+
+        Object.entries(answerScores).forEach(([current, points]) => {
+          scores[current as PoliticalCurrent] += points;
+          contributedTo.push({ current: current as PoliticalCurrent, points });
+        });
+
+        answerDetails.push({
+          questionId: question.id,
+          questionText: question.text,
+          answer: userAnswer.answer,
+          answerLabel: answerLabels[userAnswer.answer],
+          contributedTo: contributedTo.sort((a, b) => b.points - a.points),
+        });
+      }
+    });
+
+    const totalScore = Object.values(scores).reduce((sum, score) => sum + score, 0);
+
+    const percentages: Record<PoliticalCurrent, number> = {
+      "Liberalismo": 0,
+      "Conservadurismo": 0,
+      "Peronismo": 0,
+      "Kirchnerismo/Progresismo": 0,
+      "Izquierda": 0,
+      "Radicalismo": 0,
+    };
+
+    if (totalScore > 0) {
+      Object.keys(scores).forEach((current) => {
+        percentages[current as PoliticalCurrent] =
+          (scores[current as PoliticalCurrent] / totalScore) * 100;
+      });
+    }
+
+    const dominantCurrent = Object.entries(scores).reduce((max, [current, score]) => {
+      return score > max[1] ? [current, score] : max;
+    }, ["Liberalismo", 0] as [string, number])[0] as PoliticalCurrent;
+
+    const topAnswersForDominant = answerDetails
+      .filter(detail => detail.contributedTo.some(c => c.current === dominantCurrent))
+      .sort((a, b) => {
+        const aPoints = a.contributedTo.find(c => c.current === dominantCurrent)?.points || 0;
+        const bPoints = b.contributedTo.find(c => c.current === dominantCurrent)?.points || 0;
+        return bPoints - aPoints;
+      })
+      .slice(0, 3);
+
+    const keyReasons = topAnswersForDominant.map(detail => {
+      const points = detail.contributedTo.find(c => c.current === dominantCurrent)?.points || 0;
+      return `${detail.answerLabel} en: "${detail.questionText}" (+${points} puntos)`;
+    });
+
+    return {
+      scores,
+      dominantCurrent,
+      percentages,
+      answerDetails,
+      alignment: {
+        current: dominantCurrent,
+        percentage: percentages[dominantCurrent],
+        keyReasons,
+      },
+    };
   };
 
   const handleRestart = () => {
@@ -109,7 +162,7 @@ export default function Home() {
     setResults(null);
   };
 
-  if (viewState === "landing") return <LandingPage onStart={handleStart} contador={contador} />;
+  if (viewState === "landing") return <LandingPage onStart={handleStart} />;
   if (viewState === "quiz")
     return (
       <QuestionView
@@ -120,5 +173,6 @@ export default function Home() {
       />
     );
   if (viewState === "results" && results) return <ResultsView results={results} onRestart={handleRestart} />;
+
   return null;
 }
