@@ -2,8 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const response = await fetch(
-      "https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados",
+    const response = await fetch("/api/get-counter"),
       {
         headers: { Authorization: "Bearer ut_A7K6C52qUL6Ehp30saib8V6RCWYi3ohbY6PUAYQS" }, // Reemplazar TU_API_KEY
       }
