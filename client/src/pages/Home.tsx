@@ -64,7 +64,7 @@ export default function Home() {
       // 👇 Contador de usuarios únicos que completaron el test
       try {
         if (!localStorage.getItem("testpolitico-completed")) {
-          fetch("https://api.countapi.xyz/hit/testpoliticoargentino/completados")
+          fetch("https://countapi.dev/hit/testpoliticoargentino/completados")
             .then((res) => res.json())
             .then((data) => {
               console.log("✅ Nuevo usuario completó el test. Total:", data.value);
