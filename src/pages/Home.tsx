@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LandingPage } from "@/components/LandingPage";
 import { QuestionView } from "@/components/QuestionView";
 import { ResultsView } from "@/components/ResultsView";
@@ -15,6 +15,45 @@ export default function Home() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<UserAnswer[]>([]);
   const [results, setResults] = useState<TestResults | null>(null);
+  const [contador, setContador] = useState<number | null>(null);
+
+  const sessionId = getOrCreateSessionId();
+
+  // Traer valor actual del contador al cargar la LandingPage
+  useEffect(() => {
+    const fetchContador = async () => {
+      try {
+        const res = await fetch(
+          "https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados",
+          {
+            headers: { Authorization: "ut_A7K6C52qUL6Ehp30saib8V6RCWYi3ohbY6PUAYQS" },
+          }
+        );
+        const data = await res.json();
+        setContador(data.value);
+      } catch (error) {
+        console.error("Error al traer contador:", error);
+      }
+    };
+    fetchContador();
+  }, []);
+
+  // Incrementar contador solo si el usuario no lo completó antes
+  const incrementarContador = async () => {
+    try {
+      const res = await fetch("/api/increment-counter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+      });
+      const data = await res.json();
+      if (data.incremented) {
+        setContador(data.value);
+      }
+    } catch (error) {
+      console.error("Error al incrementar contador:", error);
+    }
+  };
 
   const saveResultMutation = useMutation({
     mutationFn: async (data: { sessionId: string; results: TestResults; answers: UserAnswer[] }) => {
@@ -27,9 +66,7 @@ export default function Home() {
           percentages: data.results.percentages,
           answers: data.answers,
         }),
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
     },
     onSuccess: () => {
@@ -54,28 +91,15 @@ export default function Home() {
       const calculatedResults = calculateResults(newAnswers);
       setResults(calculatedResults);
 
-      const sessionId = getOrCreateSessionId();
+      // Guardar resultados en backend
       saveResultMutation.mutate({
         sessionId,
         results: calculatedResults,
         answers: newAnswers,
       });
 
-      // 👇 Contador de usuarios únicos que completaron el test
-      try {
-        if (!localStorage.getItem("testpolitico-completed")) {
-          fetch("https://api.countapi.xyz/hit/testpoliticoargentino/completados")
-            .then((res) => res.json())
-            .then((data) => {
-              console.log("✅ Nuevo usuario completó el test. Total:", data.value);
-              localStorage.setItem("testpolitico-completed", "true");
-            })
-            .catch((err) => console.error("Error al actualizar contador:", err));
-        }
-      } catch (e) {
-        console.error("localStorage no disponible:", e);
-      }
-      // 👆 Fin contador
+      // Incrementar contador de usuarios únicos
+      incrementarContador();
 
       setViewState("results");
     }
@@ -127,26 +151,40 @@ export default function Home() {
 
     if (totalScore > 0) {
       Object.keys(scores).forEach((current) => {
-        percentages[current as PoliticalCurrent] = 
+        percentages[current as PoliticalCurrent] =
           (scores[current as PoliticalCurrent] / totalScore) * 100;
       });
     }
 
-    const dominantCurrent = Object.entries(scores).reduce((max, [current, score]) => {
-      return score > max[1] ? [current, score] : max;
-    }, ["Liberalismo", 0] as [string, number])[0] as PoliticalCurrent;
+    const dominantCurrent = Object.entries(scores).reduce(
+      (max, [current, score]) => (score > max[1] ? [current, score] : max),
+      ["Liberalismo", 0] as [string, number]
+    )[0] as PoliticalCurrent;
 
     const topAnswersForDominant = answerDetails
-      .filter(detail => detail.contributedTo.some((c: { current: PoliticalCurrent; points: number }) => c.current === dominantCurrent))
+      .filter((detail) =>
+        detail.contributedTo.some(
+          (c: { current: PoliticalCurrent; points: number }) => c.current === dominantCurrent
+        )
+      )
       .sort((a, b) => {
-        const aPoints = a.contributedTo.find((c: { current: PoliticalCurrent; points: number }) => c.current === dominantCurrent)?.points || 0;
-        const bPoints = b.contributedTo.find((c: { current: PoliticalCurrent; points: number }) => c.current === dominantCurrent)?.points || 0;
+        const aPoints =
+          a.contributedTo.find(
+            (c: { current: PoliticalCurrent; points: number }) => c.current === dominantCurrent
+          )?.points || 0;
+        const bPoints =
+          b.contributedTo.find(
+            (c: { current: PoliticalCurrent; points: number }) => c.current === dominantCurrent
+          )?.points || 0;
         return bPoints - aPoints;
       })
       .slice(0, 3);
 
-    const keyReasons = topAnswersForDominant.map(detail => {
-      const points = detail.contributedTo.find((c: { current: PoliticalCurrent; points: number }) => c.current === dominantCurrent)?.points || 0;
+    const keyReasons = topAnswersForDominant.map((detail) => {
+      const points =
+        detail.contributedTo.find(
+          (c: { current: PoliticalCurrent; points: number }) => c.current === dominantCurrent
+        )?.points || 0;
       return `${detail.answerLabel} en: "${detail.questionText}" (+${points} puntos)`;
     });
 
@@ -171,7 +209,7 @@ export default function Home() {
   };
 
   if (viewState === "landing") {
-    return <LandingPage onStart={handleStart} />;
+    return <LandingPage onStart={handleStart} contador={contador} />;
   }
 
   if (viewState === "quiz") {
