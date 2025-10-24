@@ -1,9 +1,6 @@
 import type { Express } from "express";
-import { sql } from "drizzle-orm";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { db } from "./db";
-import { testResults } from "@shared/schema";
 import { insertTestResultSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -40,16 +37,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return;
       }
       res.json(result);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  
-  app.get("/api/total-completados", async (_req, res) => {
-    try {
-      const result = await db.select({ count: sql<number>`COUNT(DISTINCT ${testResults.sessionId})` }).from(testResults);
-      res.json({ total: result[0].count });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
