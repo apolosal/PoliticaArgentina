@@ -88,26 +88,30 @@ export function ResultsView({ results, onRestart }: ResultsViewProps) {
     });
   };
 
- // ✅ Contador de usuarios únicos que completaron el test
-  useEffect(() => {
-  // Primero obtenemos el valor actual
-  fetch("https://api.countapi.xyz/get/testpoliticoargentino/completados")
-    .then((res) => res.json())
-    .then((data) => setContador(data.value))
-    .catch((err) => console.error("Error al obtener contador:", err));
+ function useTestCounter() {
+  const [contador, setContador] = useState<number | null>(null);
 
-  // Incrementamos solo si el usuario no completó el test antes
-  if (!localStorage.getItem("testpolitico-completed")) {
-    fetch("https://api.countapi.xyz/hit/testpoliticoargentino/completados")
+  useEffect(() => {
+    // Obtener valor actual
+    fetch("https://api.countapi.xyz/get/testpoliticoargentino/completados")
       .then((res) => res.json())
-      .then((data) => {
-        setContador(data.value); // actualizamos el contador visible
-        localStorage.setItem("testpolitico-completed", "true");
-      })
-      .catch((err) => console.error("Error al actualizar contador:", err));
-  }
-}, []);
-  // ✅ Fin contador
+      .then((data) => setContador(data.value))
+      .catch((err) => console.error("Error al obtener contador:", err));
+
+    // Incrementar solo si no completó el test
+    if (!localStorage.getItem("testpolitico-completed")) {
+      fetch("https://api.countapi.xyz/hit/testpoliticoargentino/completados")
+        .then((res) => res.json())
+        .then((data) => {
+          setContador(data.value);
+          localStorage.setItem("testpolitico-completed", "true");
+        })
+        .catch((err) => console.error("Error al actualizar contador:", err));
+    }
+  }, []);
+
+  return contador;
+}
   
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-8 md:py-12">
