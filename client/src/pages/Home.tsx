@@ -3,10 +3,11 @@ import { LandingPage } from "@/components/LandingPage";
 import { QuestionView } from "@/components/QuestionView";
 import { ResultsView } from "@/components/ResultsView";
 import { questions, answerLabels } from "@shared/schema";
-import type { UserAnswer, TestResults, PoliticalCurrent, AnswerDetail } from "@shared/schema";
+import type { UserAnswer, TestResults } from "@shared/schema";
 import { getOrCreateSessionId } from "@/lib/session";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
+import { calculateResults } from "@/utils/calculateResults"; // <--- Import corregido
 
 type ViewState = "landing" | "quiz" | "results";
 
@@ -15,19 +16,21 @@ export default function Home() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<UserAnswer[]>([]);
   const [results, setResults] = useState<TestResults | null>(null);
-  const [contador, setContador] = useState<number | null>(null);
+  const [contador, setContador] = useState<number>(0); // inicializamos en 0
 
   const sessionId = getOrCreateSessionId();
 
-  // Traer contador inicial
+  // Traer contador inicial de manera robusta
   useEffect(() => {
     const fetchContador = async () => {
       try {
         const res = await fetch("/api/get-counter");
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
         setContador(data.value);
       } catch (error) {
         console.error("Error al traer contador:", error);
+        setContador(0); // opcional, inicializar en 0 si falla
       }
     };
     fetchContador();
@@ -41,6 +44,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId }),
       });
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
       if (data.incremented) setContador(data.value);
     } catch (error) {
@@ -79,13 +83,14 @@ export default function Home() {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
+      // Calculamos resultados usando la función importada
       const calculatedResults = calculateResults(newAnswers);
       setResults(calculatedResults);
 
       // Guardar resultados
       saveResultMutation.mutate({ sessionId, results: calculatedResults, answers: newAnswers });
 
-      // Incrementar contador robusto
+      // Incrementar contador
       incrementarContador();
 
       setViewState("results");
@@ -98,8 +103,6 @@ export default function Home() {
     setAnswers([]);
     setResults(null);
   };
-
-  // Mantén tu función calculateResults como la tenías antes
 
   if (viewState === "landing") return <LandingPage onStart={handleStart} contador={contador} />;
   if (viewState === "quiz")
