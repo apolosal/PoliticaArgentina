@@ -1,15 +1,25 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import fs from "fs";
+import path from "path";
+
+const DATA_FILE = path.join(process.cwd(), "completedTest.json");
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  try {
-    const response = await fetch(
-      `https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados`
-    );
+  if (req.method !== "GET") return res.status(405).json({ error: "Método no permitido" });
 
-    const data = await response.json();
-    return res.status(200).json({ value: data.count ?? data.value ?? 0 });
+  try {
+    let completed: string[] = [];
+    if (fs.existsSync(DATA_FILE)) {
+      const raw = fs.readFileSync(DATA_FILE, "utf-8");
+      completed = JSON.parse(raw);
+    }
+
+    // Opcional: también podrías traer el valor de CounterAPI si quieres un contador externo
+    const contador = completed.length;
+
+    res.status(200).json({ value: contador });
   } catch (error) {
-    console.error("Error en get-counter:", error);
-    return res.status(500).json({ value: 0 });
+    console.error("Error al leer contador:", error);
+    res.status(500).json({ error: "Error al obtener contador" });
   }
 }
