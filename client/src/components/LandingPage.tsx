@@ -7,13 +7,26 @@ interface LandingPageProps {
 }
 
 export function LandingPage({ onStart }: LandingPageProps) {
-  const [contador, setContador] = useState<number | null>(null);
+  const [contador, setContador] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch("https://api.countapi.xyz/get/testpoliticoargentino/completados")
       .then((res) => res.json())
-      .then((data) => setContador(data.value))
-      .catch(() => setContador(null));
+      .then((data) => {
+        console.log("Contador recibido en Landing:", data);
+        if (data?.value !== undefined) {
+          setContador(data.value);
+        } else {
+          console.warn("CountAPI no devolvió un value válido");
+          setContador(0);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetch contador:", err);
+        setContador(0);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -39,7 +52,7 @@ export function LandingPage({ onStart }: LandingPageProps) {
         </Button>
 
         {/* 👇 Contador visible 👇 */}
-        {contador !== null && (
+        {!loading && (
           <p className="mt-6 text-base md:text-lg font-semibold text-muted-foreground">
             👥 {contador.toLocaleString('es-AR')} personas ya completaron el test
           </p>
