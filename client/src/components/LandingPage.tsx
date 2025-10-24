@@ -11,7 +11,7 @@ export function LandingPage({ onStart }: LandingPageProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("https://api.countapi.xyz/get/testpoliticoargentino/completados")
+    fetch("https://countapi.dev/get/testpoliticoargentino/completados")
       .then((res) => res.json())
       .then((data) => {
         console.log("Contador recibido en Landing:", data);
