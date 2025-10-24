@@ -26,7 +26,7 @@ export default function Home() {
         const res = await fetch(
           "https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados",
           {
-            headers: { Authorization: "ut_A7K6C52qUL6Ehp30saib8V6RCWYi3ohbY6PUAYQS" },
+            headers: { Authorization: "Bearer ut_A7K6C52qUL6Ehp30saib8V6RCWYi3ohbY6PUAYQS" },
           }
         );
         const data = await res.json();
