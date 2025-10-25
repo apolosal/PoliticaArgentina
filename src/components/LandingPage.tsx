@@ -3,10 +3,9 @@ import { ArrowRight } from "lucide-react";
 
 interface LandingPageProps {
   onStart: () => void;
-  contador: number | null; // agregamos la prop contador
 }
 
-export function LandingPage({ onStart, contador }: LandingPageProps) {
+export function LandingPage({ onStart }: LandingPageProps) {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-20 md:py-32">
       <div className="max-w-2xl mx-auto text-center">
@@ -27,13 +26,6 @@ export function LandingPage({ onStart, contador }: LandingPageProps) {
           Empezar Test
           <ArrowRight className="ml-2 h-5 w-5" />
         </Button>
-
-        {/* 👇 Contador de test completados */}
-        {contador !== null && (
-          <p className="mt-6 text-base md:text-lg font-semibold text-muted-foreground">
-            👥 {contador.toLocaleString('es-AR')} personas ya completaron el test
-          </p>
-        )}
       </div>
     </div>
   );
