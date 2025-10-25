@@ -27,7 +27,9 @@ export default function Home() {
           percentages: data.results.percentages,
           answers: data.answers,
         }),
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
     },
     onSuccess: () => {
@@ -51,25 +53,98 @@ export default function Home() {
     } else {
       const calculatedResults = calculateResults(newAnswers);
       setResults(calculatedResults);
-
+      
       const sessionId = getOrCreateSessionId();
-
-      // Guardar resultado en tu DB
       saveResultMutation.mutate({
         sessionId,
         results: calculatedResults,
         answers: newAnswers,
       });
-
-      // Incrementar contador sin bloquear la UI
-      fetch("/api/increment-counter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId }),
-      }).catch(err => console.error("Error al incrementar contador:", err));
-
+      
       setViewState("results");
     }
+  };
+
+  const calculateResults = (userAnswers: UserAnswer[]): TestResults => {
+    const scores: Record<PoliticalCurrent, number> = {
+      "Liberalismo": 0,
+      "Conservadurismo": 0,
+      "Peronismo": 0,
+      "Kirchnerismo/Progresismo": 0,
+      "Izquierda": 0,
+      "Radicalismo": 0,
+    };
+
+    const answerDetails: AnswerDetail[] = [];
+
+    userAnswers.forEach((userAnswer) => {
+      const question = questions.find((q) => q.id === userAnswer.questionId);
+      if (question) {
+        const answerScores = question.scores[userAnswer.answer];
+        const contributedTo: Array<{ current: PoliticalCurrent; points: number }> = [];
+        
+        Object.entries(answerScores).forEach(([current, points]) => {
+          scores[current as PoliticalCurrent] += points;
+          contributedTo.push({ current: current as PoliticalCurrent, points });
+        });
+
+        answerDetails.push({
+          questionId: question.id,
+          questionText: question.text,
+          answer: userAnswer.answer,
+          answerLabel: answerLabels[userAnswer.answer],
+          contributedTo: contributedTo.sort((a, b) => b.points - a.points),
+        });
+      }
+    });
+
+    const totalScore = Object.values(scores).reduce((sum, score) => sum + score, 0);
+    
+    const percentages: Record<PoliticalCurrent, number> = {
+      "Liberalismo": 0,
+      "Conservadurismo": 0,
+      "Peronismo": 0,
+      "Kirchnerismo/Progresismo": 0,
+      "Izquierda": 0,
+      "Radicalismo": 0,
+    };
+
+    if (totalScore > 0) {
+      Object.keys(scores).forEach((current) => {
+        percentages[current as PoliticalCurrent] = 
+          (scores[current as PoliticalCurrent] / totalScore) * 100;
+      });
+    }
+
+    const dominantCurrent = Object.entries(scores).reduce((max, [current, score]) => {
+      return score > max[1] ? [current, score] : max;
+    }, ["Liberalismo", 0] as [string, number])[0] as PoliticalCurrent;
+
+    const topAnswersForDominant = answerDetails
+      .filter(detail => detail.contributedTo.some((c: { current: PoliticalCurrent; points: number }) => c.current === dominantCurrent))
+      .sort((a, b) => {
+        const aPoints = a.contributedTo.find((c: { current: PoliticalCurrent; points: number }) => c.current === dominantCurrent)?.points || 0;
+        const bPoints = b.contributedTo.find((c: { current: PoliticalCurrent; points: number }) => c.current === dominantCurrent)?.points || 0;
+        return bPoints - aPoints;
+      })
+      .slice(0, 3);
+
+    const keyReasons = topAnswersForDominant.map(detail => {
+      const points = detail.contributedTo.find((c: { current: PoliticalCurrent; points: number }) => c.current === dominantCurrent)?.points || 0;
+      return `${detail.answerLabel} en: "${detail.questionText}" (+${points} puntos)`;
+    });
+
+    return {
+      scores,
+      dominantCurrent,
+      percentages,
+      answerDetails,
+      alignment: {
+        current: dominantCurrent,
+        percentage: percentages[dominantCurrent],
+        keyReasons,
+      },
+    };
   };
 
   const handleRestart = () => {
@@ -79,8 +154,11 @@ export default function Home() {
     setResults(null);
   };
 
-  if (viewState === "landing") return <LandingPage onStart={handleStart} />;
-  if (viewState === "quiz")
+  if (viewState === "landing") {
+    return <LandingPage onStart={handleStart} />;
+  }
+
+  if (viewState === "quiz") {
     return (
       <QuestionView
         question={questions[currentQuestionIndex]}
@@ -89,10 +167,11 @@ export default function Home() {
         onAnswer={handleAnswer}
       />
     );
-  if (viewState === "results" && results)
+  }
+
+  if (viewState === "results" && results) {
     return <ResultsView results={results} onRestart={handleRestart} />;
+  }
 
   return null;
 }
-
-// Mantener tu función calculateResults igual que antes
