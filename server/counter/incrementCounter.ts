@@ -1,24 +1,24 @@
 import { Request, Response } from "express";
 
-export const incrementCounter = async (_req: Request, res: Response) => {
+export async function incrementCounter(_req: Request, res: Response) {
   try {
-    const response = await fetch(
-      "https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados/up",
-      { method: "POST" }
-    );
+    const url = "https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados/up";
+
+    // ✅ IMPORTANTE: usar GET, no POST
+    const response = await fetch(url, { method: "GET" });
 
     const json = await response.json();
 
-    // ✅ Tomamos el valor correcto que devuelve V2
+    // ✅ El valor real está en json.data.up_count
     const value = json?.data?.up_count;
 
-    // Si no existe, devolvemos error adecuado
     if (value === undefined) {
-      return res.status(500).json({ error: "Invalid API response", json });
+      return res.status(500).json({ error: "Unexpected API response", json });
     }
 
     return res.json({ value });
-  } catch (error) {
-    return res.status(500).json({ error: "Error incrementing counter", details: error });
+  } catch (err) {
+    console.error("Error incrementCounter:", err);
+    return res.status(500).json({ error: "Error incrementing counter" });
   }
-};
+}
