@@ -1,5 +1,4 @@
 import type { Request, Response } from "express";
-import fetch from "node-fetch";
 
 export async function getCounter(req: Request, res: Response) {
   try {
@@ -9,7 +8,7 @@ export async function getCounter(req: Request, res: Response) {
     console.log("COUNTER_API_KEY present (first 5 chars):", apiKey.slice(0, 5) + "...");
 
     const response = await fetch(
-      `https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados`,
+      "https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados",
       { headers: { Authorization: `Bearer ${apiKey}` } }
     );
 
