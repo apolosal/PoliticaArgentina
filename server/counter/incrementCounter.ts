@@ -1,36 +1,40 @@
-// server/counter/incrementCounter.ts
-import type { Request, Response } from "express";
+import express from "express";
 import fetch from "node-fetch";
 
-export async function incrementCounter(_req: Request, res: Response) {
+const router = express.Router();
+
+router.post("/increment-counter", async (req, res) => {
   try {
-    const apiKey = process.env.COUNTER_API_KEY; // si está, usamos autenticación
-    const url = "https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados/up";
+    const apiKey = process.env.COUNTER_API_KEY;
+    const workspace = process.env.COUNTER_WORKSPACE;
+    const slug = process.env.COUNTER_SLUG;
 
-    const headers: Record<string, string> = {};
-    if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
+    const response = await fetch("https://api.counterapi.dev/v1/counter/up", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        workspace,
+        slug
+      })
+    });
 
-    // IMPORTANTE: usar GET para /up en V2
-    const response = await fetch(url, { method: "GET", headers });
-    const json = await response.json().catch(() => null);
+    const json = await response.json();
 
-    // Si la API devolvió 404/otro error, json tendrá el mensaje
-    if (!json) {
-      console.error("Invalid or empty JSON from CounterAPI");
-      return res.status(500).json({ error: "Invalid API response", json });
+    if (!response.ok) {
+      console.error("❌ Invalid API Key response:", json);
+      return res.status(500).json({ error: "Invalid API Key response", json });
     }
 
-    // json.data.up_count es la propiedad que vimos en tu respuesta
-    const value = json?.data?.up_count ?? json?.data?.value ?? json?.value ?? null;
+    // ✅ Devolver valor al frontend
+    return res.json({ value: json.data.up_count });
 
-    if (value === null || value === undefined) {
-      console.error("❌ Invalid API response:", json);
-      return res.status(500).json({ error: "Invalid API response", json });
-    }
-
-    return res.json({ value });
-  } catch (err) {
-    console.error("Error incrementCounter:", err);
-    return res.status(500).json({ error: "Error incrementing counter", details: String(err) });
+  } catch (error) {
+    console.error("🔥 Server error:", error);
+    res.status(500).json({ error: "Server error" });
   }
-}
+});
+
+export default router;
