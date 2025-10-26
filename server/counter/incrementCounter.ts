@@ -4,25 +4,33 @@ import fetch from "node-fetch";
 export async function incrementCounter(req: Request, res: Response) {
   try {
     const apiKey = process.env.COUNTER_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: "COUNTER_API_KEY not set" });
+    if (!apiKey) {
+      return res.status(500).json({ error: "COUNTER_API_KEY not set" });
+    }
 
-    // Workspace y counterName según tu caso
-    const workspace = "politicaar"; // tu workspace en CounterAPI
+    // Reemplazá con tu workspace y nombre de contador exactos
+    const workspace = "politicaar";
     const counterName = "testpoliticoargentino-completados";
-
     const url = `https://api.counterapi.dev/v2/${workspace}/${counterName}/up`;
 
     const response = await fetch(url, {
       method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}` }
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      }
     });
 
     if (!response.ok) {
-      const text = await response.text();
-      return res.status(response.status).json({ error: "Error incrementing counter", details: text });
+      const errorData = await response.json().catch(() => ({}));
+      return res.status(response.status).json({
+        error: "Error incrementing counter",
+        details: errorData
+      });
     }
 
     const data = await response.json();
+    // En V2, la propiedad que indica el nuevo valor es `up_count`
     return res.json({ value: data.data.up_count });
   } catch (err) {
     console.error("Error incrementCounter:", err);
