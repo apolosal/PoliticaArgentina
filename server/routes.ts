@@ -3,8 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertTestResultSchema } from "@shared/schema";
 
-import { incrementCounter } from "./controllers/increment-counter";
-import { getCounter } from "./controllers/get-counter";
+import { getCounter } from "./counter/getCounter";
+import { incrementCounter } from "./counter/incrementCounter";
 
 export async function registerRoutes(app: any): Promise<Server> {
   // Rutas de test
