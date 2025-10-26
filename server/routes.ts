@@ -3,7 +3,12 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertTestResultSchema } from "@shared/schema";
 
+// ✅ Importar controladores del contador
+import { getCounter } from "./counter/getCounter";
+import { incrementCounter } from "./counter/incrementCounter";
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // 🔹 Rutas existentes de test
   app.post("/api/test-results", async (req, res) => {
     try {
       const validatedData = insertTestResultSchema.parse(req.body);
@@ -41,6 +46,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: error.message });
     }
   });
+
+  // ✅ Nuevas rutas del contador
+  app.get("/api/get-counter", getCounter);
+  app.post("/api/increment-counter", incrementCounter);
 
   const httpServer = createServer(app);
 
