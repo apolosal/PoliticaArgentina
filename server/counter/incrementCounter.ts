@@ -1,9 +1,7 @@
-import express from "express";
+import { Request, Response } from "express";
 import fetch from "node-fetch";
 
-const router = express.Router();
-
-router.post("/increment-counter", async (req, res) => {
+export async function incrementCounter(req: Request, res: Response) {
   try {
     const apiKey = process.env.COUNTER_API_KEY;
     const workspace = process.env.COUNTER_WORKSPACE;
@@ -15,26 +13,18 @@ router.post("/increment-counter", async (req, res) => {
         "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        workspace,
-        slug
-      })
+      body: JSON.stringify({ workspace, slug })
     });
 
     const json = await response.json();
 
     if (!response.ok) {
-      console.error("❌ Invalid API Key response:", json);
-      return res.status(500).json({ error: "Invalid API Key response", json });
+      return res.status(500).json({ error: "Invalid API response", json });
     }
 
-    // ✅ Devolver valor al frontend
     return res.json({ value: json.data.up_count });
-
-  } catch (error) {
-    console.error("🔥 Server error:", error);
-    res.status(500).json({ error: "Server error" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Server error" });
   }
-});
-
-export default router;
+}
