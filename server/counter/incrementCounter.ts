@@ -1,46 +1,44 @@
-import type { Request, Response } from "express";
+import { Request, Response } from "express";
 import fetch from "node-fetch";
 
-export async function incrementCounter(req: Request, res: Response) {
+export const incrementCounter = async (req: Request, res: Response) => {
   try {
-    // Tomamos las variables de entorno
-    const apiKey = process.env.COUNTER_API_KEY;       // Tu token V2
-    const workspace = process.env.COUNTER_WORKSPACE; // "politicaar"
-    const counterSlug = process.env.COUNTER_SLUG;    // "testpoliticoargentino-completados"
-
-    // Validación rápida
-    if (!apiKey || !workspace || !counterSlug) {
-      return res.status(500).json({
-        error: "COUNTER_API_KEY, COUNTER_WORKSPACE o COUNTER_SLUG no definido"
-      });
+    // Revisar si el usuario ya completó (cookie)
+    const userId = req.cookies?.user_id;
+    if (!userId) {
+      return res.status(400).json({ error: "No user identifier found" });
     }
 
-    // URL correcta para V2
-    const url = `https://api.counterapi.dev/v2/${workspace}/${counterSlug}/up`;
+    // Variables de entorno
+    const apiKey = process.env.COUNTER_API_KEY;
+    const workspace = process.env.COUNTER_WORKSPACE;
+    const counterName = process.env.COUNTER_SLUG;
 
-    // Llamada POST con API Key
+    if (!apiKey || !workspace || !counterName) {
+      return res.status(500).json({ error: "COUNTER_API_KEY, COUNTER_WORKSPACE o COUNTER_SLUG no definido" });
+    }
+
+    const url = `https://api.counterapi.dev/v2/${workspace}/${counterName}/up`;
+
+    // Llamada a CounterAPI
     const response = await fetch(url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`
-      }
+        Authorization: `Bearer ${apiKey}`,
+      },
     });
 
-    const data = await response.json();
+    const json = await response.json();
 
-    // Validamos que CounterAPI devolvió datos
-    if (!data || !data.data || typeof data.data.up_count !== "number") {
-      return res.status(500).json({
-        error: "Invalid API response",
-        json: data
-      });
+    if (json.code !== 200) {
+      return res.status(500).json({ error: "Invalid API response", json });
     }
 
-    // Retornamos el valor actualizado
-    return res.json({ value: data.data.up_count });
+    // Devolver el nuevo valor
+    return res.json({ value: json.data.up_count });
 
   } catch (err) {
-    console.error("❌ Error incrementCounter:", err);
-    return res.status(500).json({ error: "Error incrementing counter" });
+    console.error("Error incrementing counter:", err);
+    return res.status(500).json({ error: "Internal server error" });
   }
-}
+};
