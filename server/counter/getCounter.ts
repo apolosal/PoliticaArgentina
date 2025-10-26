@@ -1,21 +1,19 @@
-import type { Request, Response } from "express";
 import fetch from "node-fetch";
 
-export async function getCounter(req: Request, res: Response) {
+const COUNTER_API_URL = "https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados";
+
+export async function getCounter(req: any, res: any) {
   try {
-    const apiKey = process.env.COUNTER_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: "COUNTER_API_KEY not set" });
-
-    const url = "https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados";
-
-    const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${apiKey}` }
+    const response = await fetch(COUNTER_API_URL, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${process.env.COUNTER_API_KEY}`
+      }
     });
 
     const data = await response.json();
-    return res.json({ value: data.data.up_count });
+    res.json({ value: data.data.value });
   } catch (err) {
-    console.error("Error getCounter:", err);
-    return res.status(500).json({ error: "Error fetching counter" });
+    res.status(500).json({ error: "Error fetching counter", details: err });
   }
 }
