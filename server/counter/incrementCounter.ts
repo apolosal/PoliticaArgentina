@@ -11,7 +11,7 @@ export const incrementCounter = async (req: Request, res: Response) => {
     console.log("COUNTER_API_KEY present (first 5 chars):", apiKey.slice(0, 5) + "...");
 
     const response = await fetch(
-      `https://counterapi.dev/v1/counter/politicaargentina/completados/increment`,
+      `https://counterapi.dev/v1/counter/testpoliticoargentino-completados`,
       {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}` },
