@@ -6,8 +6,11 @@ export async function incrementCounter(req: Request, res: Response) {
     const apiKey = process.env.COUNTER_API_KEY;
     if (!apiKey) return res.status(500).json({ error: "COUNTER_API_KEY not set" });
 
-    // URL basada en tu getCounter.ts, ajustada al endpoint correcto de increment
-    const url = "https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados/increment";
+    // Workspace y counterName según tu caso
+    const workspace = "politicaar"; // tu workspace en CounterAPI
+    const counterName = "testpoliticoargentino-completados";
+
+    const url = `https://api.counterapi.dev/v2/${workspace}/${counterName}/up`;
 
     const response = await fetch(url, {
       method: "POST",
