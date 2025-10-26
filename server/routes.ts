@@ -2,13 +2,13 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertTestResultSchema } from "@shared/schema";
 
-// ✅ Importar controladores del contador
+// Importar controladores del contador
 import { getCounter } from "./counter/getCounter";
 import { incrementCounter } from "./counter/incrementCounter";
 
-// 🔹 Cambié app a `any` para compatibilidad con Render
+// Usamos app: any para compatibilidad Render
 export async function registerRoutes(app: any): Promise<Server> {
-  // 🔹 Rutas existentes de test
+  // Rutas existentes de test
   app.post("/api/test-results", async (req: any, res: any) => {
     try {
       const validatedData = insertTestResultSchema.parse(req.body);
@@ -47,11 +47,10 @@ export async function registerRoutes(app: any): Promise<Server> {
     }
   });
 
-  // ✅ Nuevas rutas del contador
+  // Nuevas rutas del contador
   app.get("/api/get-counter", getCounter);
   app.post("/api/increment-counter", incrementCounter);
 
   const httpServer = createServer(app);
-
   return httpServer;
 }
