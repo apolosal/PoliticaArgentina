@@ -5,8 +5,8 @@ import fetch from "node-fetch";
 export async function incrementCounter(req: Request, res: Response) {
   try {
     // Tu workspace y nombre de contador en CounterAPI V2
-    const workspace = "politicaar"; // reemplaza por tu workspace exacto
-    const counterName = "testpoliticoargentino-completados"; // reemplaza por tu contador exacto
+    const workspace = "PoliticaAr"; // reemplaza por tu workspace exacto
+    const counterName = "testpoliticoargentino_completados"; // reemplaza por tu contador exacto
 
     // Asegúrate de tener tu API Key en las variables de entorno
     const apiKey = process.env.COUNTER_API_KEY;
