@@ -1,26 +1,21 @@
-import fetch from "node-fetch"; // ya debe estar en dependencies
+import type { Request, Response } from "express";
+import fetch from "node-fetch";
 
-export async function getCounter(req: any, res: any) {
-  const apiKey = process.env.COUNTER_API_KEY || "TU_COUNTERAPI_KEY";
-  const workspace = "politicaar"; // tu workspace
-  const key = "testpoliticoargentino-completados";
-
+export async function getCounter(req: Request, res: Response) {
   try {
-    const response = await fetch(`https://api.counterapi.dev/v2/${workspace}/${key}/get`, {
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
+    const apiKey = process.env.COUNTER_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: "COUNTER_API_KEY not set" });
+
+    const url = "https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados";
+
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${apiKey}` }
     });
 
     const data = await response.json();
-
-    if (!data || !data.data || typeof data.data.value !== "number") {
-      throw new Error("Invalid response from CounterAPI");
-    }
-
-    res.json({ value: data.data.value });
-  } catch (error: any) {
-    console.error("Error getting counter:", error);
-    res.status(500).json({ error: "Error getting counter", details: error.message });
+    return res.json({ value: data.data.up_count });
+  } catch (err) {
+    console.error("Error getCounter:", err);
+    return res.status(500).json({ error: "Error fetching counter" });
   }
 }
