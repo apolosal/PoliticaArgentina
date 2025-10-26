@@ -1,18 +1,17 @@
-import { Request, Response } from "express";
 import fetch from "node-fetch";
 
-export async function incrementCounter(req: Request, res: Response) {
+export async function incrementCounter(req: any, res: any) {
+  const apiKey = process.env.COUNTER_API_KEY || "TU_COUNTERAPI_KEY";
+  const workspace = "politicaar"; // tu workspace
+  const key = "testpoliticoargentino-completados";
+
   try {
-    const response = await fetch(
-      "https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados/up",
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.COUNTER_API_KEY}`,
-          "Content-Type": "application/json"
-        },
-      }
-    );
+    const response = await fetch(`https://api.counterapi.dev/v2/${workspace}/${key}/up`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+    });
 
     const data = await response.json();
 
@@ -22,9 +21,7 @@ export async function incrementCounter(req: Request, res: Response) {
 
     res.json({ value: data.data.value });
   } catch (error: any) {
-    res.status(500).json({
-      error: "Error incrementing counter",
-      details: error.message
-    });
+    console.error("Error incrementing counter:", error);
+    res.status(500).json({ error: "Error incrementing counter", details: error.message });
   }
 }
