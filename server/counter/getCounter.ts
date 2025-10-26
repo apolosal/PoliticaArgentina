@@ -6,7 +6,6 @@ export async function getCounter(req: Request, res: Response) {
     const apiKey = process.env.COUNTER_API_KEY;
     if (!apiKey) return res.status(500).json({ error: "COUNTER_API_KEY not set" });
 
-    // URL correcta V2 para obtener valor
     const url = "https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados";
 
     const response = await fetch(url, {
@@ -14,8 +13,6 @@ export async function getCounter(req: Request, res: Response) {
     });
 
     const data = await response.json();
-
-    // Devuelve el valor actual del contador
     return res.json({ value: data.data.up_count });
   } catch (err) {
     console.error("Error getCounter:", err);
