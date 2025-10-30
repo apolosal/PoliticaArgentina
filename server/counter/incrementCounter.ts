@@ -3,24 +3,17 @@ import fetch from "node-fetch";
 
 export async function incrementCounter(req: Request, res: Response) {
   try {
-    // Endpoint público de tu contador
-    const url = "https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados";
+    // Para contadores públicos no hace falta API Key
+    const url = "https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados/up";
 
-    // Hacemos GET para obtener el valor actual
+    // Usar GET, no POST
     const response = await fetch(url);
     const data = await response.json();
 
-    if (!data || !data.data || typeof data.data.value !== "number") {
-      return res.status(500).json({ error: "Invalid response from CounterAPI" });
-    }
-
-    // Incrementamos el valor en 1
-    const newValue = data.data.value + 1;
-
-    // Retornamos el valor incrementado al front
-    return res.json({ value: newValue });
+    // data.data.value es la estructura que devuelve CounterAPI
+    return res.json({ value: data.data.value });
   } catch (err) {
     console.error("Error incrementCounter:", err);
-    return res.status(500).json({ error: "Error incrementing counter" });
+    return res.status(500).json({ error: "Invalid response from CounterAPI" });
   }
 }
