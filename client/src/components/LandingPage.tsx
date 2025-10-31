@@ -29,7 +29,7 @@ export function LandingPage({ onStart }: LandingPageProps) {
         </h1>
 
         <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-          Respondé 10 preguntas sobre temas políticos, económicos y sociales. 
+          Respondé 15 preguntas sobre temas políticos, económicos y sociales. 
           Al finalizar, conocé qué corriente política se alinea mejor con tus ideas: 
           Liberalismo, Peronismo, Kirchnerismo, Radicalismo, Izquierda o Conservadurismo.
         </p>
@@ -47,7 +47,7 @@ export function LandingPage({ onStart }: LandingPageProps) {
         {/* 👇 Muestra el contador debajo del botón, manteniendo la estética */}
         <p className="mt-4 text-sm text-muted-foreground">
           {counter !== null
-            ? `${counter.toLocaleString()} personas ya completaron el test`
+            ? `${counter.toLocaleString()} argentinos ya completaron el test`
             : "Cargando test completados..."}
         </p>
       </div>
