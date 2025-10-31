@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,19 @@ export function ResultsView({ results, onRestart }: ResultsViewProps) {
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState(false);
   const dominantDescription = currentDescriptions[results.dominantCurrent];
+
+  // 🔥 Incrementa el contador al completar el test (solo una vez por usuario)
+  useEffect(() => {
+    if (!localStorage.getItem("testpolitico-completed")) {
+      fetch("https://politicaargentina.onrender.com/api/increment-counter", { method: "POST" })
+        .then(res => res.json())
+        .then(data => {
+          console.log("✅ Contador actualizado:", data.value);
+          localStorage.setItem("testpolitico-completed", "true");
+        })
+        .catch(err => console.error("❌ Error incrementing counter:", err));
+    }
+  }, []);
 
   const sortedResults = Object.entries(results.percentages)
     .sort(([, a], [, b]) => b - a);
