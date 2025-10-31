@@ -9,12 +9,14 @@ interface LandingPageProps {
 export function LandingPage({ onStart }: LandingPageProps) {
   const [counter, setCounter] = useState<number | null>(null);
 
-  // 🔹 Solo obtiene el número actual de tests completados (no lo incrementa)
+  // 🔹 Obtiene el número actual de tests completados desde /api/get-counter
   useEffect(() => {
-    fetch("https://politicaargentina.onrender.com/api/counter")
+    fetch("https://politicaargentina.onrender.com/api/get-counter")
       .then(res => res.json())
       .then(data => {
-        setCounter(data.value);
+        const count = typeof data === "number" ? data : data?.value;
+        console.log("📊 Respuesta del contador:", data);
+        if (count !== undefined) setCounter(count);
       })
       .catch(err => console.error("❌ Error fetching counter:", err));
   }, []);
@@ -46,7 +48,7 @@ export function LandingPage({ onStart }: LandingPageProps) {
         <p className="mt-4 text-sm text-muted-foreground">
           {counter !== null
             ? `${counter.toLocaleString()} personas ya completaron el test`
-            : "Cargando participantes..."}
+            : "Cargando test completados..."}
         </p>
       </div>
     </div>
