@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-// Contador local (fuente de verdad)
+// Contador local: fuente de verdad
 let localCounter = 0;
 
 // Registro de usuarios que ya incrementaron
@@ -11,7 +11,7 @@ export async function incrementCounter(req: Request, res: Response) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // Identificador del usuario (puede ser x-user-id o IP)
+  // Identificador del usuario (x-user-id o IP)
   const userId = req.headers["x-user-id"] || req.ip;
 
   // Si el usuario ya incrementó, devolvemos el contador actual
@@ -20,20 +20,20 @@ export async function incrementCounter(req: Request, res: Response) {
   }
 
   try {
-    // Incrementamos el contador local
+    // Incrementamos contador local
     localCounter += 1;
 
     // Marcamos al usuario como incrementado
     userIncrementMap[userId as string] = true;
 
-    // Enviamos incremento a CounterAPI para registro externo (no bloquea el valor local)
+    // Enviar incremento a CounterAPI solo como registro externo
     const url = "https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados/up";
     fetch(url, { method: "GET" })
       .then(response => response.json())
       .then(json => console.log("CounterAPI incremented:", json?.data?.up_count))
       .catch(err => console.error("Error updating CounterAPI:", err));
 
-    // Devolvemos valor actualizado consistente
+    // Devolvemos valor consistente al usuario
     return res.json({ value: localCounter });
 
   } catch (err) {
@@ -42,7 +42,7 @@ export async function incrementCounter(req: Request, res: Response) {
   }
 }
 
-// Endpoint opcional para consultar el contador local
+// Endpoint para consultar contador local
 export function getCounter(_req: Request, res: Response) {
   return res.json({ value: localCounter });
 }
