@@ -1,15 +1,15 @@
 import { Request, Response } from "express";
 
-export async function incrementCounter(_req: Request, res: Response) {
+export async function incrementCounter(req: Request, res: Response) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
   try {
     const url = "https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados/up";
-
-    // ✅ IMPORTANTE: usar GET, no POST
     const response = await fetch(url, { method: "GET" });
-
     const json = await response.json();
 
-    // ✅ El valor real está en json.data.up_count
     const value = json?.data?.up_count;
 
     if (value === undefined) {
