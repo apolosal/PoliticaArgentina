@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 
-// Contador local temporal (memoria del servidor)
-let localCounter = 0;
-
 // Registro de usuarios que ya incrementaron
 const userIncrementMap: Record<string, boolean> = {};
+
+// Contador local opcional (para usar en frontend o tests)
+let localCounter = 0;
 
 export async function incrementCounter(req: Request, res: Response) {
   if (req.method !== "POST") {
@@ -14,7 +14,7 @@ export async function incrementCounter(req: Request, res: Response) {
   // Identificador del usuario
   const userId = req.headers["x-user-id"] || req.ip;
 
-  // Si ya incrementó, devolvemos el valor actual
+  // Si el usuario ya incrementó, devolvemos el valor actual
   if (userIncrementMap[userId as string]) {
     return res.status(200).json({ message: "Already incremented", value: localCounter });
   }
@@ -26,21 +26,29 @@ export async function incrementCounter(req: Request, res: Response) {
     // Marcamos al usuario como incrementado
     userIncrementMap[userId as string] = true;
 
-    // Llamada opcional a CounterAPI para registrar externamente
+    // ✅ Enviamos el incremento a CounterAPI
     const url = "https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados/up";
-    fetch(url, { method: "GET" }).catch(err => {
-      console.error("Error updating CounterAPI:", err);
-    });
 
-    // Devolvemos el valor actualizado
+    // Hacemos fetch a CounterAPI y no bloqueamos la respuesta si falla
+    fetch(url, { method: "GET" })
+      .then(response => response.json())
+      .then(json => {
+        console.log("CounterAPI incremented:", json?.data?.up_count);
+      })
+      .catch(err => {
+        console.error("Error updating CounterAPI:", err);
+      });
+
+    // Devolvemos valor actualizado
     return res.json({ value: localCounter });
+
   } catch (err) {
     console.error("Error incrementCounter:", err);
     return res.status(500).json({ error: "Error incrementing counter" });
   }
 }
 
-// Endpoint para obtener el contador actual
+// Endpoint opcional para consultar el contador local
 export function getCounter(_req: Request, res: Response) {
   return res.json({ value: localCounter });
 }
