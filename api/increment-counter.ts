@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
 
 // -----------------------------
-// Contador local (fuente de verdad)
+// Contador local y registro de usuarios
 // -----------------------------
 let localCounter = 0;
-
-// Registro de usuarios que ya incrementaron
 const userIncrementMap: Record<string, boolean> = {};
+
+// Lock para evitar increments simultáneos
+let incrementLock = false;
 
 // -----------------------------
 // Endpoint para incrementar contador
@@ -16,45 +17,36 @@ export async function incrementCounter(req: Request, res: Response) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // Identificador único del usuario: x-user-id o fallback a IP
   const userId = (req.headers["x-user-id"] as string) || req.ip;
 
-  // Si el usuario ya incrementó, devolvemos el contador actual
+  // Si ya incrementó
   if (userIncrementMap[userId]) {
-    return res.status(200).json({
-      message: "Already incremented",
-      value: localCounter
-    });
+    return res.status(200).json({ message: "Already incremented", value: localCounter });
   }
 
-  try {
-    // -----------------------------
-    // 1. Incrementamos el contador local
-    // -----------------------------
-    localCounter += 1;
+  // -----------------------------
+  // Lock para evitar increments simultáneos
+  // -----------------------------
+  while (incrementLock) {
+    await new Promise(resolve => setTimeout(resolve, 1)); // espera 1ms
+  }
+  incrementLock = true;
 
-    // 2. Marcamos al usuario como incrementado
+  try {
+    // Incremento seguro
+    localCounter += 1;
     userIncrementMap[userId] = true;
 
-    // 3. Enviamos incremento a CounterAPI solo como registro externo
-    const counterUrl =
-      "https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados/up";
+    // Registro externo en CounterAPI (no afecta valor local)
+    fetch("https://api.counterapi.dev/v2/politicaar/testpoliticoargentino-completados/up", { method: "GET" })
+      .then(resp => resp.json())
+      .then(json => console.log("✅ CounterAPI incremented:", json?.data?.up_count))
+      .catch(err => console.error("⚠️ Error CounterAPI:", err));
 
-    fetch(counterUrl, { method: "GET" })
-      .then(response => response.json())
-      .then(json =>
-        console.log("✅ CounterAPI incremented:", json?.data?.up_count)
-      )
-      .catch(err =>
-        console.error("⚠️ Error updating CounterAPI:", err)
-      );
-
-    // 4. Devolvemos valor local consistente
     return res.json({ value: localCounter });
 
-  } catch (err) {
-    console.error("Error incrementCounter:", err);
-    return res.status(500).json({ error: "Error incrementing counter" });
+  } finally {
+    incrementLock = false;
   }
 }
 
