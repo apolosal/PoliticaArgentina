@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SplashScreen from "@/components/SplashScreen";
 import { LandingPage } from "@/components/LandingPage";
 import { QuestionView } from "@/components/QuestionView";
 import { ResultsView } from "@/components/ResultsView";
@@ -11,6 +12,7 @@ import { useMutation } from "@tanstack/react-query";
 type ViewState = "landing" | "quiz" | "results";
 
 export default function Home() {
+  const [showSplash, setShowSplash] = useState(true);
   const [viewState, setViewState] = useState<ViewState>("landing");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<UserAnswer[]>([]);
@@ -154,6 +156,11 @@ export default function Home() {
     setResults(null);
   };
 
+  // 💥 Splash Screen antes de todo
+  if (showSplash) {
+    return <SplashScreen onFinish={() => setShowSplash(false)} />;
+  }
+
   if (viewState === "landing") {
     return <LandingPage onStart={handleStart} />;
   }
@@ -170,8 +177,4 @@ export default function Home() {
   }
 
   if (viewState === "results" && results) {
-    return <ResultsView results={results} onRestart={handleRestart} />;
-  }
-
-  return null;
-}
+    return
