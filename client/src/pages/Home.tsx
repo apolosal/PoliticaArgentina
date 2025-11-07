@@ -55,14 +55,14 @@ export default function Home() {
     } else {
       const calculatedResults = calculateResults(newAnswers);
       setResults(calculatedResults);
-      
+
       const sessionId = getOrCreateSessionId();
       saveResultMutation.mutate({
         sessionId,
         results: calculatedResults,
         answers: newAnswers,
       });
-      
+
       setViewState("results");
     }
   };
@@ -84,7 +84,7 @@ export default function Home() {
       if (question) {
         const answerScores = question.scores[userAnswer.answer];
         const contributedTo: Array<{ current: PoliticalCurrent; points: number }> = [];
-        
+
         Object.entries(answerScores).forEach(([current, points]) => {
           scores[current as PoliticalCurrent] += points;
           contributedTo.push({ current: current as PoliticalCurrent, points });
@@ -101,7 +101,7 @@ export default function Home() {
     });
 
     const totalScore = Object.values(scores).reduce((sum, score) => sum + score, 0);
-    
+
     const percentages: Record<PoliticalCurrent, number> = {
       "Liberalismo": 0,
       "Conservadurismo": 0,
@@ -113,26 +113,29 @@ export default function Home() {
 
     if (totalScore > 0) {
       Object.keys(scores).forEach((current) => {
-        percentages[current as PoliticalCurrent] = 
+        percentages[current as PoliticalCurrent] =
           (scores[current as PoliticalCurrent] / totalScore) * 100;
       });
     }
 
-    const dominantCurrent = Object.entries(scores).reduce((max, [current, score]) => {
-      return score > max[1] ? [current, score] : max;
-    }, ["Liberalismo", 0] as [string, number])[0] as PoliticalCurrent;
+    const dominantCurrent = Object.entries(scores).reduce(
+      (max, [current, score]) => (score > max[1] ? [current, score] : max),
+      ["Liberalismo", 0] as [string, number]
+    )[0] as PoliticalCurrent;
 
     const topAnswersForDominant = answerDetails
-      .filter(detail => detail.contributedTo.some((c: { current: PoliticalCurrent; points: number }) => c.current === dominantCurrent))
+      .filter(detail =>
+        detail.contributedTo.some((c) => c.current === dominantCurrent)
+      )
       .sort((a, b) => {
-        const aPoints = a.contributedTo.find((c: { current: PoliticalCurrent; points: number }) => c.current === dominantCurrent)?.points || 0;
-        const bPoints = b.contributedTo.find((c: { current: PoliticalCurrent; points: number }) => c.current === dominantCurrent)?.points || 0;
+        const aPoints = a.contributedTo.find((c) => c.current === dominantCurrent)?.points || 0;
+        const bPoints = b.contributedTo.find((c) => c.current === dominantCurrent)?.points || 0;
         return bPoints - aPoints;
       })
       .slice(0, 3);
 
     const keyReasons = topAnswersForDominant.map(detail => {
-      const points = detail.contributedTo.find((c: { current: PoliticalCurrent; points: number }) => c.current === dominantCurrent)?.points || 0;
+      const points = detail.contributedTo.find((c) => c.current === dominantCurrent)?.points || 0;
       return `${detail.answerLabel} en: "${detail.questionText}" (+${points} puntos)`;
     });
 
@@ -156,11 +159,12 @@ export default function Home() {
     setResults(null);
   };
 
-  // 💥 Splash Screen antes de todo
+  // 👇 SPLASH SCREEN
   if (showSplash) {
     return <SplashScreen onFinish={() => setShowSplash(false)} />;
   }
 
+  // 👇 VISTAS PRINCIPALES
   if (viewState === "landing") {
     return <LandingPage onStart={handleStart} />;
   }
@@ -177,4 +181,8 @@ export default function Home() {
   }
 
   if (viewState === "results" && results) {
-    return
+    return <ResultsView results={results} onRestart={handleRestart} />;
+  }
+
+  return null;
+}
