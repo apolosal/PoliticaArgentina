@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
@@ -7,33 +6,17 @@ interface LandingPageProps {
 }
 
 export function LandingPage({ onStart }: LandingPageProps) {
-  const [counter, setCounter] = useState<number | null>(null);
-
-  // 🔹 Obtiene el número actual de tests completados desde /api/get-counter
-  useEffect(() => {
-    fetch("https://politicaargentina.onrender.com/api/get-counter")
-      .then(res => res.json())
-      .then(data => {
-        const count = typeof data === "number" ? data : data?.value;
-        console.log("📊 Respuesta del contador:", data);
-        if (count !== undefined) setCounter(count);
-      })
-      .catch(err => console.error("❌ Error fetching counter:", err));
-  }, []);
-
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-20 md:py-32">
       <div className="max-w-2xl mx-auto text-center">
         <h1 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
           Descubrí con qué ideas políticas coincidís en Argentina
         </h1>
-
         <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
           Respondé 15 preguntas sobre temas políticos, económicos y sociales. 
           Al finalizar, conocé qué corriente política se alinea mejor con tus ideas: 
           Liberalismo, Peronismo, Kirchnerismo, Radicalismo, Izquierda o Conservadurismo.
         </p>
-
         <Button
           onClick={onStart}
           size="lg"
@@ -43,13 +26,6 @@ export function LandingPage({ onStart }: LandingPageProps) {
           Empezar Test
           <ArrowRight className="ml-2 h-5 w-5" />
         </Button>
-
-        {/* 👇 Muestra el contador debajo del botón, manteniendo la estética */}
-        <p className="mt-4 text-sm text-muted-foreground">
-          {counter !== null
-            ? `${counter.toLocaleString()} argentinos ya completaron el test`
-            : "Cargando test completados..."}
-        </p>
       </div>
     </div>
   );
